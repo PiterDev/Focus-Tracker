@@ -22,12 +22,12 @@
 
 	let quotes = data.quotes
 
-	function timerToggled() {
+	async function timerToggled() {
 		counting = !counting
 		if (counting) {
 			startTimer()
 		} else {
-			stopTimer()
+			await stopTimer()
 		}
 	}
 
@@ -37,9 +37,29 @@
 		message = quotes[Math.floor(Math.random() * quotes.length)].quote
 	}
 
-	function stopTimer() {
+	async function stopTimer() {
 		timer.stop()
 		message = ''
+
+		if ($page.data.session) {
+			const userId = $page.data.session.user?.id
+			if (userId) {
+				const today = new Date()
+				today.setHours(0, 0, 0, 0)
+
+				fetch('api/users', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						id: userId,
+						timeSeconds: timer.getTimeSeconds(),
+						date: today
+					})
+				})
+			}
+		}
 	}
 
 	function updateTimer() {

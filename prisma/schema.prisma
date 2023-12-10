@@ -16,3 +16,17 @@ model Quote {
   quote  String
   author String?
 }
+
+model User {
+  id         String      @id
+  focusStats FocusInfo[]
+}
+
+model FocusInfo {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @unique
+  timeSeconds Int
+
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String?
+}
