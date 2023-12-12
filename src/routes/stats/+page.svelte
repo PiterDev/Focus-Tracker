@@ -3,17 +3,36 @@
 	import XMarkIcon from '$lib/components/icons/XMarkIcon.svelte'
 	import { onMount } from 'svelte'
 	import { page } from '$app/stores'
-	import 'chartjs-adapter-moment'
+
+	import { Line } from 'svelte-chartjs'
+	import { Chart, registerables } from 'chart.js'
+	Chart.register(...registerables)
 
 	// TODO: Get rid of this mess, and migrate to svelte-chartjs
 
 	const currentDate = new Date()
-
+	let data: Object
 	onMount(async () => {
+		// Set the graph data to the fetched user stats
+		const { dates, times } = await fetchUserStats()
+		data = {
+			labels: dates.map((date) => `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`),
+			datasets: [
+				{
+					label: 'Time spent focusing',
+					data: times,
+					fill: false,
+					borderColor: 'rgb(75, 192, 192)',
+					tension: 0.1
+				}
+			]
+		}
+	})
+
+	async function fetchUserStats() {
 		if ($page.data.session) {
 			const userId = $page.data.session.user?.id
 			if (userId) {
-				// Fetch the user's focus stats from the /api/users endpoint with a get request
 				const response = await fetch(`/api/users/${userId}`)
 				const { focusStats } = await response.json()
 				// Create an array of all the dates and of all the times in seconds
@@ -23,43 +42,10 @@
 					dates.push(new Date(focusStat.date))
 					times.push(focusStat.timeSeconds)
 				}
-				await drawChart(dates, times)
+				return { dates, times }
 			}
 		}
-	})
-
-	async function drawChart(dates: Array<Date>, times: Array<number>) {
-		const { Chart, registerables } = await import('chart.js')
-
-		Chart.register(...registerables)
-		const ctx = chartCanvas.getContext('2d')
-		// Scale the graph exponentially
-		const chart = new Chart(ctx!, {
-			type: 'line',
-			data: {
-				labels: dates.map((date) => {
-					return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
-				}),
-				datasets: [
-					{
-						label: 'Focus time (hours)',
-						data: times,
-						backgroundColor: ['rgba(255, 99, 132, 0.2)'],
-						borderColor: ['rgba(255, 99, 132, 1)'],
-						borderWidth: 1
-					}
-				]
-			},
-			options: {
-				scales: {
-					y: {
-						beginAtZero: true
-					}
-				}
-			}
-		})
-		//draw the chart on the canvas
-		chart.update()
+		return { dates: [], times: [] }
 	}
 
 	let chartCanvas: HTMLCanvasElement
@@ -77,7 +63,7 @@
 			aut, ipsa eos consectetur dolorem error alias, quia sunt ducimus ab.
 		</p>
 	</section>
-	<canvas bind:this={chartCanvas}></canvas>
+	<Line {data} />
 </article>
 
 <style lang="scss">
