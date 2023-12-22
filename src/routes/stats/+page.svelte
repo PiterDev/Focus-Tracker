@@ -5,13 +5,13 @@
 	import { page } from '$app/stores'
 
 	import { Line } from 'svelte-chartjs'
-	import { Chart, registerables } from 'chart.js'
+	import { Chart, registerables, type ChartData } from 'chart.js'
 	Chart.register(...registerables)
 
 	// TODO: Get rid of this mess, and migrate to svelte-chartjs
 
 	const currentDate = new Date()
-	let data: Object
+	let data: ChartData<'line', (number | import('chart.js').Point)[], unknown>
 	onMount(async () => {
 		// Set the graph data to the fetched user stats
 		const { dates, times } = await fetchUserStats()
